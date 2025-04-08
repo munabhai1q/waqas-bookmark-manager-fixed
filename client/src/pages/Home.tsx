@@ -1,19 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Bookmark } from '@/lib/types';
 import { useQuery } from '@tanstack/react-query';
 import Sidebar from '@/components/Sidebar';
 import AddBookmarkModal from '@/components/AddBookmarkModal';
 import EmbedErrorModal from '@/components/EmbedErrorModal';
-import MultiTabsContainer from '@/components/MultiTabsContainer';
+import MultiTabsContainer from '../components/MultiTabsContainer';
 import { useTestEmbedding } from '@/lib/hooks';
 import { useMobile } from '@/lib/hooks';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const [currentBookmark, setCurrentBookmark] = useState<Bookmark | undefined>(undefined);
   const [isAddBookmarkModalOpen, setIsAddBookmarkModalOpen] = useState(false);
   const [isEmbedErrorModalOpen, setIsEmbedErrorModalOpen] = useState(false);
   
+  // Reference to the MultiTabsContainer component
+  const tabsContainerRef = useRef<{ addTab: (bookmark: Bookmark) => void } | null>(null);
+  
   const isMobile = useMobile();
+  const { toast } = useToast();
   
   // Get all bookmarks to find initial bookmark to display
   const { data: bookmarks, isLoading } = useQuery<Bookmark[]>({
@@ -44,7 +49,31 @@ export default function Home() {
   }, [currentBookmark, canEmbed]);
   
   const handleSelectBookmark = (bookmark: Bookmark) => {
+    // Set the current bookmark
     setCurrentBookmark(bookmark);
+    
+    // Also add it to the tabs container if reference exists
+    if (tabsContainerRef.current) {
+      tabsContainerRef.current.addTab(bookmark);
+      
+      toast({
+        title: "बुकमार्क जोड़ा गया",
+        description: `"${bookmark.title}" अब खुल रहा है।`
+      });
+    }
+  };
+  
+  const handleAddBookmarkModalClose = () => {
+    setIsAddBookmarkModalOpen(false);
+    
+    // Refresh the bookmark list to show newly added bookmark
+    if (tabsContainerRef.current && bookmarks && bookmarks.length > 0) {
+      // Check if we have a new bookmark that wasn't shown before
+      const latestBookmark = bookmarks[bookmarks.length - 1];
+      if (latestBookmark && latestBookmark.id !== currentBookmark?.id) {
+        setCurrentBookmark(latestBookmark);
+      }
+    }
   };
   
   return (
@@ -58,6 +87,7 @@ export default function Home() {
       <main className="flex-1 flex flex-col overflow-hidden bg-gray-50">
         {/* Content with Multi-Tabs */}
         <MultiTabsContainer
+          ref={tabsContainerRef}
           initialBookmark={currentBookmark}
           showWelcome={!isLoading && (!bookmarks || bookmarks.length === 0)}
           onShowAddBookmark={() => setIsAddBookmarkModalOpen(true)}
@@ -67,7 +97,7 @@ export default function Home() {
       {/* Modals */}
       <AddBookmarkModal 
         isOpen={isAddBookmarkModalOpen} 
-        onClose={() => setIsAddBookmarkModalOpen(false)} 
+        onClose={handleAddBookmarkModalClose} 
       />
       
       <EmbedErrorModal 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Bookmark, OpenTab } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -12,11 +12,8 @@ interface MultiTabsContainerProps {
   initialBookmark?: Bookmark;
 }
 
-export default function MultiTabsContainer({ 
-  showWelcome, 
-  onShowAddBookmark,
-  initialBookmark 
-}: MultiTabsContainerProps) {
+const MultiTabsContainer = forwardRef<{ addTab: (bookmark: Bookmark) => void }, MultiTabsContainerProps>((props, ref) => {
+  const { showWelcome, onShowAddBookmark, initialBookmark } = props;
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -95,6 +92,11 @@ export default function MultiTabsContainer({
   const openInNewTab = (url: string) => {
     window.open(url, '_blank');
   };
+
+  // Expose addTab method to parent component
+  useImperativeHandle(ref, () => ({
+    addTab
+  }));
 
   return (
     <div className={`flex flex-col flex-1 overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`}>
@@ -192,4 +194,6 @@ export default function MultiTabsContainer({
       </div>
     </div>
   );
-}
+});
+
+export default MultiTabsContainer;
