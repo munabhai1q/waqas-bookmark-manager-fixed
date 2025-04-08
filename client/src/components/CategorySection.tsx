@@ -28,20 +28,25 @@ export default function CategorySection({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: bookmarks, isLoading, refetch } = useQuery<Bookmark[]>({
-    queryKey: ['/api/bookmarks/category', category.id],
-    retry: 1
+  // Get all bookmarks
+  const { data: allBookmarks, isLoading: isLoadingAll } = useQuery<Bookmark[]>({
+    queryKey: ['/api/bookmarks'],
+    retry: 1,
+    staleTime: 0
   });
   
-  // Force re-fetch bookmarks when component mounts or when currentBookmarkId changes
-  useEffect(() => {
-    refetch();
-  }, [currentBookmarkId, refetch]);
+  // Filter bookmarks for this category
+  const bookmarks = allBookmarks ? allBookmarks.filter(b => b.categoryId === category.id) : [];
+  const isLoading = isLoadingAll;
+  
+  // No need for separate per-category fetch, we're now using the main bookmarks list
+  // and filtering it here for better reactivity
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteBookmark(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/bookmarks/category', category.id] });
+      // Invalidate all bookmark queries
+      queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'] });
       toast({
         title: "Bookmark Deleted",
         description: "The bookmark has been removed from your list.",

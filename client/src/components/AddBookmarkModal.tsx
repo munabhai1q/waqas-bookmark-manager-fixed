@@ -56,12 +56,12 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
   const addBookmarkMutation = useMutation({
     mutationFn: (newBookmark: NewBookmark) => addNewBookmark(newBookmark),
     onSuccess: (data) => {
-      // Invalidate all bookmarks queries
-      queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'] });
-      // Invalidate the specific category's bookmarks
-      queryClient.invalidateQueries({ queryKey: ['/api/bookmarks/category', data.categoryId] });
-      // Invalidate all category bookmark queries (for good measure)
-      queryClient.invalidateQueries({ queryKey: ['/api/bookmarks/category'] });
+      // Invalidate all queries to force a fresh refetch
+      queryClient.invalidateQueries();
+      
+      // Additional logs for debugging
+      console.log("Bookmark added successfully:", data);
+      
       toast({
         title: "Bookmark Added",
         description: "Your new bookmark has been successfully added."
@@ -81,7 +81,12 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
   const addCategoryMutation = useMutation({
     mutationFn: (name: string) => addNewCategory({ name }),
     onSuccess: (newCategory) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      // Invalidate all queries to force a fresh refetch
+      queryClient.invalidateQueries();
+      
+      // Additional logs for debugging
+      console.log("Category added successfully:", newCategory);
+      
       toast({
         title: "Category Added",
         description: "Your new category has been created."

@@ -29,13 +29,16 @@ export default function Sidebar({
   // Fetch categories
   const { data: categories, isLoading: isLoadingCategories } = useQuery<BookmarkCategory[]>({
     queryKey: ['/api/categories'],
-    retry: 1
+    retry: 1,
+    staleTime: 0 // Always refetch categories when component mounts
   });
 
   // Fetch all bookmarks for search
   const { data: bookmarks, refetch: refetchBookmarks } = useQuery<Bookmark[]>({
     queryKey: ['/api/bookmarks'],
-    retry: 1
+    retry: 1,
+    staleTime: 0, // Always refetch bookmarks when component mounts
+    refetchOnWindowFocus: true // Also refetch on window focus
   });
   
   // Effect to refetch data when Home component passes in a new bookmark
