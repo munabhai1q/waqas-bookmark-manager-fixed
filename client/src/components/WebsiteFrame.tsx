@@ -8,16 +8,18 @@ interface WebsiteFrameProps {
   bookmark?: Bookmark;
   showWelcome: boolean;
   onShowAddBookmark: () => void;
+  refreshKey?: number;
 }
 
 export default function WebsiteFrame({ 
   bookmark, 
   showWelcome,
-  onShowAddBookmark
+  onShowAddBookmark,
+  refreshKey = 0
 }: WebsiteFrameProps) {
   // Call hooks consistently - ALWAYS in the same order
   const [isLoading, setIsLoading] = useState(true);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [internalRefreshKey, setInternalRefreshKey] = useState(0);
   // Always call the hook with a URL (empty string if no bookmark)
   const { canEmbed } = useTestEmbedding(bookmark?.url || '');
   
@@ -26,7 +28,7 @@ export default function WebsiteFrame({
     if (bookmark) {
       setIsLoading(true);
     }
-  }, [bookmark, refreshKey]);
+  }, [bookmark, internalRefreshKey, refreshKey]);
   
   const handleIframeLoad = () => {
     setIsLoading(false);
@@ -38,9 +40,40 @@ export default function WebsiteFrame({
     }
   };
   
+  const handleRefresh = () => {
+    setInternalRefreshKey(prevKey => prevKey + 1);
+    setIsLoading(true);
+  };
+  
   // Render the component
   return (
     <div className="flex-1 overflow-hidden relative">
+      {/* Quick controls for active frames */}
+      {bookmark && canEmbed && (
+        <div className="absolute bottom-4 right-4 z-20 flex space-x-2 opacity-70 hover:opacity-100 transition-opacity">
+          <Button 
+            size="sm" 
+            variant="secondary" 
+            className="bg-white shadow-md"
+            onClick={handleRefresh}
+            title="रीफ्रेश करें"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          <Button 
+            size="sm" 
+            variant="secondary" 
+            className="bg-white shadow-md"
+            onClick={handleOpenInNewTab}
+            title="नए टैब में खोलें"
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Open
+          </Button>
+        </div>
+      )}
+      
       {/* Loading spinner */}
       {isLoading && bookmark && (
         <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 z-10">
@@ -87,13 +120,15 @@ export default function WebsiteFrame({
       {/* Iframe content */}
       {bookmark && canEmbed && (
         <iframe 
-          key={`${bookmark?.id || 0}-${refreshKey}`}
+          key={`${bookmark?.id || 0}-${internalRefreshKey}-${refreshKey}`}
           src={bookmark.url} 
           className="w-full h-full border-0 iframe-container" 
-          sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+          sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-storage-access-by-user-activation"
+          allow="camera; microphone; clipboard-read; clipboard-write; display-capture"
           loading="lazy"
           title={bookmark.title}
           onLoad={handleIframeLoad}
+          referrerPolicy="no-referrer"
         ></iframe>
       )}
     </div>

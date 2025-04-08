@@ -28,3 +28,8 @@ export interface NewBookmark {
 export interface NewCategory {
   name: string;
 }
+
+export interface OpenTab {
+  bookmark: Bookmark;
+  isActive: boolean;
+}

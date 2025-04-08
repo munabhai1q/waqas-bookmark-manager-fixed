@@ -3,8 +3,15 @@ import { BookmarkCategory, Bookmark } from '@/lib/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteBookmark } from '@/lib/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronDown, ChevronRight, Trash2, Edit } from 'lucide-react';
+import { ChevronDown, ChevronRight, Trash2, ExternalLink, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 interface CategorySectionProps {
   category: BookmarkCategory;
@@ -31,14 +38,14 @@ export default function CategorySection({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/bookmarks/category', category.id] });
       toast({
-        title: "Bookmark deleted",
-        description: "The bookmark has been removed from your list.",
+        title: "बुकमार्क हटा दिया गया",
+        description: "बुकमार्क आपकी सूची से हटा दिया गया है।",
       });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: "Failed to delete bookmark. Please try again.",
+        title: "त्रुटि",
+        description: "बुकमार्क को हटाने में विफल। कृपया पुनः प्रयास करें।",
         variant: "destructive",
       });
     }
@@ -47,6 +54,11 @@ export default function CategorySection({
   const handleDeleteBookmark = (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
     deleteMutation.mutate(id);
+  };
+
+  const openInNewBrowserTab = (e: React.MouseEvent, url: string) => {
+    e.stopPropagation();
+    window.open(url, '_blank');
   };
 
   const toggleExpand = () => {
@@ -87,6 +99,28 @@ export default function CategorySection({
                   <span className="truncate">{bookmark.title}</span>
                 </div>
                 <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                      >
+                        <Edit className="h-3.5 w-3.5 text-gray-500" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectBookmark(bookmark);
+                      }}>
+                        एकल टैब में खोलें
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => openInNewBrowserTab(e, bookmark.url)}>
+                        बाहरी ब्राउज़र में खोलें
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <button
                     className="p-1 rounded hover:bg-gray-200"
                     onClick={(e) => handleDeleteBookmark(e, bookmark.id)}
@@ -98,7 +132,7 @@ export default function CategorySection({
               </div>
             ))
           ) : (
-            <div className="text-sm text-gray-500 italic p-2">No bookmarks in this category</div>
+            <div className="text-sm text-gray-500 italic p-2">इस श्रेणी में कोई बुकमार्क नहीं</div>
           )}
         </div>
       )}
