@@ -1,0 +1,17 @@
+Please follow these steps to create the new "waqas-bookmark-wiki" repository:
+
+1. Go to GitHub: https://github.com
+2. Click on the "+" icon in the top right corner
+3. Select "New repository"
+4. Set the repository name to: "waqas-bookmark-wiki"
+5. Keep it as Public
+6. Do NOT initialize with README, .gitignore, or license
+7. Click "Create repository"
+8. Copy the URL of your new repository (it should be https://github.com/munabhai1q/waqas-bookmark-wiki.git)
+
+After creating the repository, run these commands in your terminal:
+
+git remote add wiki https://github.com/munabhai1q/waqas-bookmark-wiki.git
+git push -u wiki main
+
+This will push all your code to the new repository.
