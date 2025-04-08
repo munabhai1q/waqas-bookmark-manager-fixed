@@ -185,8 +185,8 @@ export default function WebsiteFrame({
               key={`${bookmark?.id || 0}-${internalRefreshKey}-${refreshKey}`}
               src={bookmark.url} 
               className="w-full h-full border-0" 
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-storage-access-by-user-activation"
-              allow="camera; microphone; clipboard-read; clipboard-write; display-capture"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-storage-access-by-user-activation allow-downloads allow-modals allow-orientation-lock allow-pointer-lock allow-presentation"
+              allow="camera; microphone; clipboard-read; clipboard-write; display-capture; fullscreen; autoplay; payment"
               loading="lazy"
               title={bookmark.title}
               onLoad={handleIframeLoad}

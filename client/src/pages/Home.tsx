@@ -8,7 +8,7 @@ import MultiTabsContainer from '../components/MultiTabsContainer';
 import { useTestEmbedding } from '@/lib/hooks';
 import { useMobile } from '@/lib/hooks';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Droplets, Palette, Bot, PaintBucket, Waves } from 'lucide-react';
+import { Sparkles, Droplets, Palette, Bot, PaintBucket } from 'lucide-react';
 import WaterAnimation from '@/components/WaterAnimation';
 import BubblesButton from '@/components/BubblesButton';
 import ColorPicker from '@/components/ColorPicker';
@@ -197,7 +197,7 @@ export default function Home() {
                 <div className="md:col-span-2">
                   <div className="bg-white rounded-lg shadow-md p-6">
                     <h2 className="text-xl font-bold mb-4 flex items-center">
-                      <Waves className="h-5 w-5 mr-2 text-blue-500" />
+                      <Droplets className="h-5 w-5 mr-2 text-blue-500" />
                       Interactive Ocean Water
                     </h2>
                     <p className="text-gray-600 mb-4">

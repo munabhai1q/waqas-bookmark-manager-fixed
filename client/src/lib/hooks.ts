@@ -68,16 +68,16 @@ export function useTestEmbedding(url: string) {
     // Skip empty URLs
     if (!url) return;
     
-    // This is a simulated check. 
+    // For development purposes, allow all sites to be embedded
+    // This is a simulated check that will no longer block sites
     // In a real-world scenario, you'd need a server-side proxy to check for X-Frame-Options
-    // or use a more sophisticated approach.
     
-    // For demo purposes, we'll block certain known sites that disallow framing
-    const nonEmbeddableSites = [
-      'chat.openai.com',
-      'linkedin.com',
-      'facebook.com',
-      'twitter.com'
+    // We'll keep the list for reference, but won't block these sites in demo mode
+    const nonEmbeddableSites: string[] = [
+      // 'chat.openai.com',
+      // 'linkedin.com',
+      // 'facebook.com',
+      // 'twitter.com'
     ];
     
     const isNonEmbeddable = nonEmbeddableSites.some(site => url.includes(site));
