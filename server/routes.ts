@@ -1,9 +1,10 @@
-import express, { type Express, Request, Response } from "express";
+import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookmarkSchema, insertBookmarkCategorySchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import axios from 'axios';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const apiRouter = express.Router();
@@ -169,6 +170,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ message: 'Bookmark deleted successfully' });
     } catch (error) {
       res.status(500).json({ message: 'Failed to delete bookmark' });
+    }
+  });
+
+  // Proxy endpoint for website content
+  // This helps bypass X-Frame-Options restrictions by fetching content through our server
+  apiRouter.get('/proxy', async (req: Request, res: Response) => {
+    try {
+      const targetUrl = req.query.url as string;
+      
+      if (!targetUrl) {
+        return res.status(400).json({ message: 'URL parameter is required' });
+      }
+      
+      console.log(`Proxying request to: ${targetUrl}`);
+      
+      // Ensure URL has a protocol
+      let processedUrl = targetUrl;
+      if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
+        processedUrl = 'https://' + processedUrl;
+      }
+      
+      console.log(`Proxying to processed URL: ${processedUrl}`);
+      
+      const response = await axios.get(processedUrl, {
+        responseType: 'arraybuffer',
+        timeout: 10000, // 10 second timeout
+        maxRedirects: 5,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+        },
+      });
+      
+      // Set response headers to allow embedding
+      res.setHeader('Content-Type', response.headers['content-type'] || 'text/html');
+      res.setHeader('X-Frame-Options', 'ALLOWALL');
+      res.setHeader('Content-Security-Policy', "frame-ancestors 'self' *");
+      res.removeHeader('X-Frame-Options');
+      
+      // Send the response
+      res.send(response.data);
+    } catch (error: any) {
+      console.error('Proxy error:', error);
+      res.status(500).json({ message: 'Failed to proxy content', error: error?.message || String(error) });
     }
   });
 

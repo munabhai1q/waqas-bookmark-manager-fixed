@@ -64,6 +64,50 @@ export default function WebsiteFrame({
     setBorderColor(color);
   };
   
+  // Get an embed link for sites that typically block iframes
+  const getEmbedLink = (url: string): string => {
+    try {
+      // Extract the domain from the URL
+      const urlObj = new URL(url);
+      const domain = urlObj.hostname.toLowerCase();
+      
+      // Format-specific embeds for known services
+      if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
+        // YouTube embed
+        const videoId = url.includes('watch?v=') 
+          ? new URLSearchParams(urlObj.search).get('v')
+          : url.split('/').pop();
+        return `https://www.youtube.com/embed/${videoId}`;
+      } else if (domain.includes('vimeo.com')) {
+        // Vimeo embed
+        const videoId = url.split('/').pop();
+        return `https://player.vimeo.com/video/${videoId}`;
+      } else if (domain.includes('google.com') && url.includes('/maps/')) {
+        // Google Maps embed
+        return `https://www.google.com/maps/embed?pb=${url.split('!3d')[1]}`;
+      } else if (domain.includes('twitter.com') || domain.includes('x.com')) {
+        // Twitter/X embed via publish.twitter.com
+        return `https://twitframe.com/show?url=${encodeURIComponent(url)}`;
+      } else if (domain.includes('linkedin.com')) {
+        // LinkedIn uses a special embed code - we can't directly iframe it
+        return url;
+      } else if (domain.includes('temp-mail.org') || domain.includes('tempmail')) {
+        // For TempMail sites, we need to create a special one-time iframe embedding
+        // Since direct embedding is not possible for security reasons, we recommend the 
+        // "new tab" approach for these services
+        
+        // Just return the original URL - WebsiteFrame will show the "can't embed" message
+        // and offer to open in a new tab
+        return "";
+      }
+    } catch (e) {
+      console.error("URL parsing error:", e);
+    }
+    
+    // Default: return the original URL
+    return url;
+  };
+
   // Render the component
   return (
     <div className={`flex-1 overflow-hidden relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`}>
@@ -183,7 +227,7 @@ export default function WebsiteFrame({
             <iframe 
               ref={iframeRef}
               key={`${bookmark?.id || 0}-${internalRefreshKey}-${refreshKey}`}
-              src={bookmark.url} 
+              src={getEmbedLink(bookmark.url)} 
               className="w-full h-full border-0" 
               sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-storage-access-by-user-activation allow-downloads allow-modals allow-orientation-lock allow-pointer-lock allow-presentation"
               allow="camera; microphone; clipboard-read; clipboard-write; display-capture; fullscreen; autoplay; payment"

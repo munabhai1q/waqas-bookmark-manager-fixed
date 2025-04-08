@@ -68,16 +68,27 @@ export function useTestEmbedding(url: string) {
     // Skip empty URLs
     if (!url) return;
     
-    // For development purposes, allow all sites to be embedded
-    // This is a simulated check that will no longer block sites
-    // In a real-world scenario, you'd need a server-side proxy to check for X-Frame-Options
+    try {
+      // Check if the URL is a temp-mail service which has special handling requirements
+      if (url) {
+        const domainCheck = new URL(url);
+        const domain = domainCheck.hostname.toLowerCase();
+        
+        // These sites require special handling - we'll show the "open in new tab" option
+        if (domain.includes('temp-mail.org') || domain.includes('tempmail')) {
+          console.log('Temp mail service detected, setting canEmbed to false');
+          setCanEmbed(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error('URL parsing error:', e);
+    }
     
-    // We'll keep the list for reference, but won't block these sites in demo mode
+    // For all other sites, we'll allow embedding
+    // This still keeps the check in place in case we decide to block certain sites in the future
     const nonEmbeddableSites: string[] = [
-      // 'chat.openai.com',
-      // 'linkedin.com',
-      // 'facebook.com',
-      // 'twitter.com'
+      // No other sites are blocked
     ];
     
     const isNonEmbeddable = nonEmbeddableSites.some(site => url.includes(site));
