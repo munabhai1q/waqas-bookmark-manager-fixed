@@ -43,7 +43,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Delete a category
+  // Delete a category and all its bookmarks
   apiRouter.delete('/categories/:id', async (req: Request, res: Response) => {
     try {
       const categoryId = parseInt(req.params.id);
@@ -58,9 +58,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In a real app, check if the category belongs to the authenticated user
       
+      // First get all bookmarks in this category
+      const bookmarksInCategory = await storage.getBookmarksByCategory(categoryId);
+      
+      // Delete each bookmark
+      for (const bookmark of bookmarksInCategory) {
+        await storage.deleteBookmark(bookmark.id);
+      }
+      
+      // Then delete the category
       await storage.deleteCategory(categoryId);
-      res.status(200).json({ message: 'Category deleted successfully' });
+      res.status(200).json({ 
+        message: 'Category and its bookmarks deleted successfully',
+        deletedBookmarksCount: bookmarksInCategory.length
+      });
     } catch (error) {
+      console.error("Error deleting category:", error);
       res.status(500).json({ message: 'Failed to delete category' });
     }
   });
