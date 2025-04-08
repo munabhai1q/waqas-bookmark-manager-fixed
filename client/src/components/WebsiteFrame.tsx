@@ -224,18 +224,48 @@ export default function WebsiteFrame({
             onDragStart={() => setIsDragging(true)}
             onDragEnd={() => setIsDragging(false)}
           >
-            <iframe 
-              ref={iframeRef}
-              key={`${bookmark?.id || 0}-${internalRefreshKey}-${refreshKey}`}
-              src={getEmbedLink(bookmark.url)} 
-              className="w-full h-full border-0" 
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-storage-access-by-user-activation allow-downloads allow-modals allow-orientation-lock allow-pointer-lock allow-presentation"
-              allow="camera; microphone; clipboard-read; clipboard-write; display-capture; fullscreen; autoplay; payment"
-              loading="lazy"
-              title={bookmark.title}
-              onLoad={handleIframeLoad}
-              referrerPolicy="no-referrer"
-            />
+            {/* Conditional rendering based on domain type */}
+            {bookmark.url.includes("youtube.com") || bookmark.url.includes("youtu.be") ? (
+              <iframe 
+                ref={iframeRef}
+                key={`${bookmark?.id || 0}-${internalRefreshKey}-${refreshKey}-yt`}
+                src={getEmbedLink(bookmark.url)} 
+                className="w-full h-full border-0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                loading="eager"
+                title={`YouTube: ${bookmark.title}`}
+                onLoad={handleIframeLoad}
+                style={{width: "100%", height: "100%"}}
+              />
+            ) : bookmark.url.includes("google.com") ? (
+              <iframe 
+                ref={iframeRef}
+                key={`${bookmark?.id || 0}-${internalRefreshKey}-${refreshKey}-google`}
+                src={bookmark.url} 
+                className="w-full h-full border-0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                loading="eager"
+                title={`Google: ${bookmark.title}`}
+                onLoad={handleIframeLoad}
+                referrerPolicy="no-referrer"
+                style={{width: "100%", height: "100%"}}
+              />
+            ) : (
+              <iframe 
+                ref={iframeRef}
+                key={`${bookmark?.id || 0}-${internalRefreshKey}-${refreshKey}`}
+                src={getEmbedLink(bookmark.url)} 
+                className="w-full h-full border-0" 
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-storage-access-by-user-activation allow-downloads allow-modals allow-orientation-lock allow-pointer-lock allow-presentation"
+                allow="camera; microphone; clipboard-read; clipboard-write; display-capture; fullscreen; autoplay; payment"
+                loading="eager"
+                title={bookmark.title}
+                onLoad={handleIframeLoad}
+                referrerPolicy="no-referrer"
+                style={{width: "100%", height: "100%"}}
+              />
+            )}
           </motion.div>
         )}
       </div>

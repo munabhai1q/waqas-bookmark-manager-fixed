@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Bot, X, ArrowRight, Minimize2, Maximize2, Power, Terminal, TerminalSquare, RefreshCw } from 'lucide-react';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
 interface Message {
   id: string;
@@ -51,10 +51,10 @@ export default function RobotAssistant({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Check if ANTHROPIC_API_KEY is available in environment
+  // Check if OPENAI_API_KEY is available in environment
   useEffect(() => {
     // This is a placeholder. The actual check would be handled by your backend
-    const storedKey = localStorage.getItem('ANTHROPIC_API_KEY');
+    const storedKey = localStorage.getItem('OPENAI_API_KEY');
     if (storedKey) {
       setApiKey(storedKey);
     }
@@ -71,11 +71,11 @@ export default function RobotAssistant({
 
   const saveApiKey = () => {
     if (apiKey.trim()) {
-      localStorage.setItem('ANTHROPIC_API_KEY', apiKey);
+      localStorage.setItem('OPENAI_API_KEY', apiKey);
       setShowApiKeyInput(false);
       toast({
         title: 'API Key Saved',
-        description: 'Your Anthropic API key has been saved.',
+        description: 'Your OpenAI API key has been saved.',
       });
     } else {
       toast({
@@ -124,7 +124,7 @@ export default function RobotAssistant({
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        let responseText = 'I need an Anthropic API key to provide intelligent responses. Please set your API key by typing "set API key" or click the settings button.';
+        let responseText = 'I need an OpenAI API key to provide intelligent responses. Please set your API key by typing "set API key" or click the settings button.';
         
         if (userInput.toLowerCase().includes('hello') || userInput.toLowerCase().includes('hi')) {
           responseText = 'Hello! I\'m your robot assistant. How can I help you today?';
@@ -143,21 +143,28 @@ export default function RobotAssistant({
         return;
       }
       
-      // the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
+      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       // Prepare conversation history
-      const anthropic = new Anthropic({
+      const openai = new OpenAI({
         apiKey: apiKey,
       });
       
       const systemPrompt = generateSystemPrompt();
       
-      // Convert messages to Anthropic format (exclude system messages)
-      const messagesToSend = messages
+      // Convert messages for OpenAI format (exclude existing system messages)
+      const messagesToSend: {role: 'system' | 'user' | 'assistant'; content: string}[] = [
+        { role: 'system', content: systemPrompt }
+      ];
+      
+      // Add conversation history
+      messages
         .filter(m => m.role !== 'system')
-        .map(m => ({
-          role: m.role,
-          content: m.content
-        }));
+        .forEach(m => {
+          messagesToSend.push({
+            role: m.role as 'user' | 'assistant', // Type assertion
+            content: m.content
+          });
+        });
       
       // Add user's new message
       messagesToSend.push({
@@ -165,24 +172,23 @@ export default function RobotAssistant({
         content: userInput
       });
       
-      // Call Anthropic API
-      const response = await anthropic.messages.create({
-        model: 'claude-3-7-sonnet-20250219',
-        system: systemPrompt,
-        max_tokens: 1000,
+      // Call OpenAI API
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
         messages: messagesToSend,
+        max_tokens: 1000,
       });
       
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.content[0].text,
+        content: response.choices[0].message.content || 'No response received',
       };
       
       setMessages(prev => [...prev, botMessage]);
       
       // Check if the response contains actionable content
-      handleRobotActions(response.content[0].text);
+      handleRobotActions(response.choices[0].message.content || '');
       
     } catch (error) {
       console.error('Error generating response:', error);
@@ -357,13 +363,13 @@ export default function RobotAssistant({
                 {/* API Key Input Form (conditionally rendered) */}
                 {showApiKeyInput && (
                   <div className="p-3 border-t border-border">
-                    <label className="block text-sm font-medium mb-1">Enter Anthropic API Key</label>
+                    <label className="block text-sm font-medium mb-1">Enter OpenAI API Key</label>
                     <div className="flex space-x-2">
                       <Input
                         type="password"
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
-                        placeholder="sk-ant-..."
+                        placeholder="sk-..."
                         className="flex-1"
                       />
                       <Button onClick={saveApiKey} size="sm">Save</Button>
