@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BookmarkCategory, Bookmark } from '@/lib/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteBookmark } from '@/lib/hooks';
@@ -28,10 +28,15 @@ export default function CategorySection({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: bookmarks, isLoading } = useQuery<Bookmark[]>({
+  const { data: bookmarks, isLoading, refetch } = useQuery<Bookmark[]>({
     queryKey: ['/api/bookmarks/category', category.id],
     retry: 1
   });
+  
+  // Force re-fetch bookmarks when component mounts or when currentBookmarkId changes
+  useEffect(() => {
+    refetch();
+  }, [currentBookmarkId, refetch]);
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteBookmark(id),

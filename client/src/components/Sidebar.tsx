@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bookmark, BookmarkCategory } from '@/lib/types';
 import { useQuery } from '@tanstack/react-query';
 import { useMobile } from '@/lib/hooks';
@@ -24,6 +24,7 @@ export default function Sidebar({
   const [isVisible, setIsVisible] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const isMobile = useMobile();
+  const [key, setKey] = useState(0); // Add a key for forcing re-render
 
   // Fetch categories
   const { data: categories, isLoading: isLoadingCategories } = useQuery<BookmarkCategory[]>({
@@ -32,10 +33,18 @@ export default function Sidebar({
   });
 
   // Fetch all bookmarks for search
-  const { data: bookmarks } = useQuery<Bookmark[]>({
+  const { data: bookmarks, refetch: refetchBookmarks } = useQuery<Bookmark[]>({
     queryKey: ['/api/bookmarks'],
     retry: 1
   });
+  
+  // Effect to refetch data when Home component passes in a new bookmark
+  useEffect(() => {
+    if (currentBookmarkId) {
+      refetchBookmarks();
+      setKey(prev => prev + 1); // Force re-render
+    }
+  }, [currentBookmarkId, refetchBookmarks]);
 
   const toggleSidebar = () => {
     setIsVisible(!isVisible);
@@ -96,7 +105,7 @@ export default function Sidebar({
             onClick={onAddBookmark} 
             className="w-full"
           >
-            <Plus className="h-4 w-4 mr-2" /> Add Bookmark
+            <Plus className="h-4 w-4 mr-2" /> बुकमार्क जोड़ें
           </Button>
         </div>
         
@@ -105,7 +114,7 @@ export default function Sidebar({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
             <Input 
               type="text" 
-              placeholder="Search bookmarks..." 
+              placeholder="बुकमार्क खोजें..." 
               className="w-full pl-9 pr-4"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -139,7 +148,7 @@ export default function Sidebar({
             ))
           ) : (
             <div className="p-4 text-center text-gray-500">
-              {searchQuery ? 'No matches found' : 'No categories yet'}
+              {searchQuery ? 'कोई मिलान नहीं मिला' : 'अभी तक कोई श्रेणी नहीं'}
             </div>
           )}
         </div>
