@@ -1,7 +1,12 @@
 import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertBookmarkSchema, insertBookmarkCategorySchema } from "@shared/schema";
+import { 
+  insertBookmarkSchema, 
+  insertBookmarkCategorySchema,
+  insertSectionSchema,
+  insertAchievementSchema
+} from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import axios from 'axios';
@@ -218,6 +223,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sections APIs
+  // Get all sections for a user
+  apiRouter.get('/sections', async (req: Request, res: Response) => {
+    try {
+      // In a real app, userId would come from the authenticated session
+      const userId = 1; // Using demo user
+      const sections = await storage.getSections(userId);
+      res.json(sections);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch sections' });
+    }
+  });
+  
+  // Create a new section
+  apiRouter.post('/sections', async (req: Request, res: Response) => {
+    try {
+      // In a real app, userId would come from the authenticated session
+      const userId = 1; // Using demo user
+      
+      const data = insertSectionSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      const section = await storage.createSection(data);
+      res.status(201).json(section);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        res.status(500).json({ message: 'Failed to create section' });
+      }
+    }
+  });
+  
+  // Update a section
+  apiRouter.patch('/sections/:id', async (req: Request, res: Response) => {
+    try {
+      const sectionId = parseInt(req.params.id);
+      if (isNaN(sectionId)) {
+        return res.status(400).json({ message: 'Invalid section ID' });
+      }
+      
+      const section = await storage.getSectionById(sectionId);
+      if (!section) {
+        return res.status(404).json({ message: 'Section not found' });
+      }
+      
+      // In a real app, check if the section belongs to the authenticated user
+      
+      const updatedSection = await storage.updateSection(sectionId, req.body);
+      res.json(updatedSection);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update section' });
+    }
+  });
+  
+  // Delete a section
+  apiRouter.delete('/sections/:id', async (req: Request, res: Response) => {
+    try {
+      const sectionId = parseInt(req.params.id);
+      if (isNaN(sectionId)) {
+        return res.status(400).json({ message: 'Invalid section ID' });
+      }
+      
+      const section = await storage.getSectionById(sectionId);
+      if (!section) {
+        return res.status(404).json({ message: 'Section not found' });
+      }
+      
+      // In a real app, check if the section belongs to the authenticated user
+      
+      await storage.deleteSection(sectionId);
+      res.status(200).json({ message: 'Section deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to delete section' });
+    }
+  });
+  
+  // Get bookmarks for a section
+  apiRouter.get('/sections/:id/bookmarks', async (req: Request, res: Response) => {
+    try {
+      const sectionId = parseInt(req.params.id);
+      if (isNaN(sectionId)) {
+        return res.status(400).json({ message: 'Invalid section ID' });
+      }
+      
+      const bookmarks = await storage.getBookmarksBySection(sectionId);
+      res.json(bookmarks);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch bookmarks for section' });
+    }
+  });
+  
+  // Achievement APIs
+  // Get all achievements with progress for a user
+  apiRouter.get('/achievements', async (req: Request, res: Response) => {
+    try {
+      // In a real app, userId would come from the authenticated session
+      const userId = 1; // Using demo user
+      const achievements = await storage.getUserAchievements(userId);
+      res.json(achievements);
+    } catch (error) {
+      console.error('Error fetching achievements:', error);
+      res.status(500).json({ message: 'Failed to fetch achievements' });
+    }
+  });
+  
+  // Check and update achievements for a user (trigger recalculation)
+  apiRouter.get('/achievements/check', async (req: Request, res: Response) => {
+    try {
+      // In a real app, userId would come from the authenticated session
+      const userId = 1; // Using demo user
+      const achievements = await storage.checkUserAchievements(userId);
+      res.json(achievements);
+    } catch (error) {
+      console.error('Error checking achievements:', error);
+      res.status(500).json({ message: 'Failed to check achievements' });
+    }
+  });
+  
+  // Track bookmark visit (for achievements)
+  apiRouter.post('/bookmarks/:id/visit', async (req: Request, res: Response) => {
+    try {
+      const bookmarkId = parseInt(req.params.id);
+      if (isNaN(bookmarkId)) {
+        return res.status(400).json({ message: 'Invalid bookmark ID' });
+      }
+      
+      await storage.incrementBookmarkVisit(bookmarkId);
+      res.status(200).json({ message: 'Visit tracked successfully' });
+    } catch (error) {
+      console.error('Error tracking bookmark visit:', error);
+      res.status(500).json({ message: 'Failed to track visit' });
+    }
+  });
+  
   app.use('/api', apiRouter);
   
   const httpServer = createServer(app);

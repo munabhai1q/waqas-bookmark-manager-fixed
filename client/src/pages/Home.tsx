@@ -9,7 +9,7 @@ import MultiTabsContainer from '../components/MultiTabsContainer';
 import { useTestEmbedding } from '@/lib/hooks';
 import { useMobile } from '@/lib/hooks';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Droplets, Palette, Bot, PaintBucket } from 'lucide-react';
+import { Sparkles, Droplets, Palette, Bot, PaintBucket, Trophy } from 'lucide-react';
 import WaterAnimation from '@/components/WaterAnimation';
 import BubblesButton from '@/components/BubblesButton';
 import ColorPicker from '@/components/ColorPicker';
@@ -18,6 +18,7 @@ import OceanWaterAnimation from '@/components/OceanWaterAnimation';
 import RobotAssistant from '@/components/RobotAssistant'; 
 import CustomThemeManager from '@/components/CustomThemeManager';
 import CategoryManager from '@/components/CategoryManager';
+import Achievements from '@/components/Achievements';
 import {
   Tabs,
   TabsContent,
@@ -37,7 +38,8 @@ export default function Home() {
     {id: "youtube", name: "YouTube"},
     {id: "bookmarks", name: "Bookmarks"},
     {id: "features", name: "Features"},
-    {id: "themes", name: "Themes"}
+    {id: "themes", name: "Themes"},
+    {id: "achievements", name: "Achievements"}
   ]);
   const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
   const [demoColor, setDemoColor] = useState<string>("#3498db");
@@ -182,6 +184,7 @@ export default function Home() {
                 </Button>
                 <CategoryManager />
                 <CustomThemeManager />
+                <Achievements />
               </div>
             </div>
             
@@ -295,10 +298,38 @@ export default function Home() {
               </div>
             </TabsContent>
             
+            <TabsContent value="achievements" className="p-4 h-full overflow-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2 bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-xl font-bold mb-4 flex items-center">
+                    <Trophy className="h-5 w-5 mr-2 text-amber-500" />
+                    Achievements System
+                  </h2>
+                  <p className="text-gray-600 mb-4">
+                    Track your progress and unlock rewards as you use the bookmark manager. Complete actions like adding bookmarks, 
+                    creating categories, and visiting bookmarked websites to unlock achievements and rewards.
+                  </p>
+                  <div className="mt-8">
+                    <Button
+                      onClick={() => {
+                        const achievementSheet = document.querySelector('[data-achievements-sheet="true"]') as HTMLElement;
+                        if (achievementSheet) {
+                          achievementSheet.click();
+                        }
+                      }}
+                      className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+                    >
+                      View Your Achievements
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
             {/* Dynamic TabsContent for custom sections */}
             {tabs.map(tab => {
               // Skip default tabs which already have their own TabsContent components
-              if (["bookmarks", "features", "themes"].includes(tab.id)) {
+              if (["bookmarks", "features", "themes", "achievements"].includes(tab.id)) {
                 return null;
               }
               
