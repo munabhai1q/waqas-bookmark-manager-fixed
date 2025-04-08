@@ -43,14 +43,14 @@ export default function CategorySection({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/bookmarks/category', category.id] });
       toast({
-        title: "बुकमार्क हटा दिया गया",
-        description: "बुकमार्क आपकी सूची से हटा दिया गया है।",
+        title: "Bookmark Deleted",
+        description: "The bookmark has been removed from your list.",
       });
     },
     onError: (error) => {
       toast({
-        title: "त्रुटि",
-        description: "बुकमार्क को हटाने में विफल। कृपया पुनः प्रयास करें।",
+        title: "Error",
+        description: "Failed to delete bookmark. Please try again.",
         variant: "destructive",
       });
     }
@@ -78,6 +78,11 @@ export default function CategorySection({
       >
         <span className="font-medium text-gray-700 flex items-center">
           <i className="fas fa-folder mr-2 text-primary"></i> {category.name}
+          {bookmarks && bookmarks.length > 0 && (
+            <span className="ml-2 px-2 py-0.5 bg-gray-200 text-xs rounded-full">
+              {bookmarks.length}
+            </span>
+          )}
         </span>
         {isExpanded ? 
           <ChevronDown className="h-4 w-4 text-gray-500" /> : 
@@ -119,10 +124,10 @@ export default function CategorySection({
                         e.stopPropagation();
                         onSelectBookmark(bookmark);
                       }}>
-                        बुकमार्क खोलें
+                        Open Bookmark
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={(e) => openInNewBrowserTab(e, bookmark.url)}>
-                        बाहरी ब्राउज़र में खोलें
+                        Open in External Browser
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -137,7 +142,7 @@ export default function CategorySection({
               </div>
             ))
           ) : (
-            <div className="text-sm text-gray-500 italic p-2">इस श्रेणी में कोई बुकमार्क नहीं</div>
+            <div className="text-sm text-gray-500 italic p-2">No bookmarks in this category</div>
           )}
         </div>
       )}

@@ -55,19 +55,23 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
   // Add bookmark mutation
   const addBookmarkMutation = useMutation({
     mutationFn: (newBookmark: NewBookmark) => addNewBookmark(newBookmark),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate all bookmarks queries
       queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'] });
+      // Invalidate the specific category's bookmarks
+      queryClient.invalidateQueries({ queryKey: ['/api/bookmarks/category', data.categoryId] });
+      // Invalidate all category bookmark queries (for good measure)
       queryClient.invalidateQueries({ queryKey: ['/api/bookmarks/category'] });
       toast({
-        title: "बुकमार्क जोड़ा गया",
-        description: "आपका नया बुकमार्क सफलतापूर्वक जोड़ा गया है।"
+        title: "Bookmark Added",
+        description: "Your new bookmark has been successfully added."
       });
       onClose();
     },
     onError: (error) => {
       toast({
-        title: "त्रुटि",
-        description: "बुकमार्क जोड़ने में विफल। कृपया पुनः प्रयास करें।",
+        title: "Error",
+        description: "Failed to add bookmark. Please try again.",
         variant: "destructive"
       });
     }
@@ -79,16 +83,16 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
     onSuccess: (newCategory) => {
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
       toast({
-        title: "श्रेणी जोड़ी गई",
-        description: "आपकी नई श्रेणी बना दी गई है।"
+        title: "Category Added",
+        description: "Your new category has been created."
       });
       setIsAddingCategory(false);
       setCategoryId(String(newCategory.id));
     },
     onError: (error) => {
       toast({
-        title: "त्रुटि",
-        description: "श्रेणी जोड़ने में विफल। कृपया पुनः प्रयास करें।",
+        title: "Error",
+        description: "Failed to add category. Please try again.",
         variant: "destructive"
       });
     }
@@ -99,8 +103,8 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
     
     if (!url || !title || !categoryId) {
       toast({
-        title: "फील्ड अनुपलब्ध",
-        description: "कृपया सभी आवश्यक फील्ड भरें।",
+        title: "Missing Fields",
+        description: "Please fill in all required fields.",
         variant: "destructive"
       });
       return;
@@ -111,8 +115,8 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
       new URL(url); // This will throw if URL is invalid
     } catch (error) {
       toast({
-        title: "अमान्य URL",
-        description: "कृपया http:// या https:// के साथ एक मान्य URL दर्ज करें",
+        title: "Invalid URL",
+        description: "Please enter a valid URL with http:// or https://",
         variant: "destructive"
       });
       return;
@@ -131,8 +135,8 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) {
       toast({
-        title: "खाली श्रेणी नाम",
-        description: "कृपया एक श्रेणी नाम दर्ज करें।",
+        title: "Empty Category Name",
+        description: "Please enter a category name.",
         variant: "destructive"
       });
       return;
@@ -145,15 +149,15 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>नया बुकमार्क जोड़ें</DialogTitle>
+          <DialogTitle>Add New Bookmark</DialogTitle>
           <DialogDescription>
-            अपने बुकमार्क कलेक्शन में एक वेबसाइट जोड़ें।
+            Add a website to your bookmark collection.
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="url">वेबसाइट URL</Label>
+            <Label htmlFor="url">Website URL</Label>
             <Input 
               id="url" 
               type="url" 
@@ -165,11 +169,11 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
           </div>
           
           <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="title">शीर्षक</Label>
+            <Label htmlFor="title">Title</Label>
             <Input 
               id="title" 
               type="text" 
-              placeholder="मेरा बुकमार्क" 
+              placeholder="My Bookmark" 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -177,12 +181,12 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
           </div>
           
           <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="category">श्रेणी</Label>
+            <Label htmlFor="category">Category</Label>
             {isAddingCategory ? (
               <div className="flex gap-2">
                 <Input 
                   id="newCategory" 
-                  placeholder="नई श्रेणी का नाम" 
+                  placeholder="New Category Name" 
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                 />
@@ -191,21 +195,21 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
                   onClick={handleAddCategory}
                   disabled={addCategoryMutation.isPending}
                 >
-                  जोड़ें
+                  Add
                 </Button>
                 <Button 
                   type="button" 
                   variant="outline"
                   onClick={() => setIsAddingCategory(false)}
                 >
-                  रद्द करें
+                  Cancel
                 </Button>
               </div>
             ) : (
               <div className="flex gap-2">
                 <Select value={categoryId} onValueChange={setCategoryId}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="श्रेणी चुनें" />
+                    <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories?.map(category => (
@@ -221,17 +225,17 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
                   onClick={() => setIsAddingCategory(true)}
                   className="shrink-0"
                 >
-                  <PlusCircle className="h-4 w-4 mr-1" /> नई
+                  <PlusCircle className="h-4 w-4 mr-1" /> New
                 </Button>
               </div>
             )}
           </div>
           
           <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="description">विवरण (वैकल्पिक)</Label>
+            <Label htmlFor="description">Description (Optional)</Label>
             <Textarea 
               id="description" 
-              placeholder="विवरण जोड़ें..." 
+              placeholder="Add description..." 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -240,10 +244,10 @@ export default function AddBookmarkModal({ isOpen, onClose }: AddBookmarkModalPr
           
           <DialogFooter className="sm:justify-end">
             <Button type="button" variant="outline" onClick={onClose}>
-              रद्द करें
+              Cancel
             </Button>
             <Button type="submit" disabled={addBookmarkMutation.isPending}>
-              {addBookmarkMutation.isPending ? "जोड़ रहा है..." : "बुकमार्क जोड़ें"}
+              {addBookmarkMutation.isPending ? "Adding..." : "Add Bookmark"}
             </Button>
           </DialogFooter>
         </form>

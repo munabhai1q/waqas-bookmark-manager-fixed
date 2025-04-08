@@ -5,7 +5,7 @@ import { useMobile } from '@/lib/hooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CategorySection from './CategorySection';
-import { Search, Plus, Menu, X } from 'lucide-react';
+import { Search, Plus, Menu, X, FolderPlus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -86,7 +86,7 @@ export default function Sidebar({
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-primary flex items-center">
-              <i className="fas fa-bookmark mr-2"></i> WebFramer
+              <i className="fas fa-bookmark mr-2"></i> WAQAS BOOKMARK
             </h1>
             {isMobile && (
               <button 
@@ -101,12 +101,31 @@ export default function Sidebar({
         </div>
         
         <div className="p-4 border-b border-gray-200">
-          <Button 
-            onClick={onAddBookmark} 
-            className="w-full"
-          >
-            <Plus className="h-4 w-4 mr-2" /> बुकमार्क जोड़ें
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              onClick={onAddBookmark} 
+              className="w-full"
+            >
+              <Plus className="h-4 w-4 mr-2" /> Add Bookmark
+            </Button>
+            <Button 
+              onClick={() => {
+                const name = prompt("Enter name for new section:");
+                if (name) {
+                  // Import directly to avoid circular dependencies
+                  import('@/lib/hooks').then(({ addNewCategory }) => {
+                    addNewCategory({ name }).then(() => {
+                      // Force refresh categories
+                      setKey(prev => prev + 1);
+                    });
+                  });
+                }
+              }} 
+              className="w-full bg-gradient-to-r from-red-500 to-black hover:from-red-600 hover:to-black"
+            >
+              <FolderPlus className="h-4 w-4 mr-2" /> New Section
+            </Button>
+          </div>
         </div>
         
         <div className="p-4 border-b border-gray-200">
@@ -114,7 +133,7 @@ export default function Sidebar({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
             <Input 
               type="text" 
-              placeholder="बुकमार्क खोजें..." 
+              placeholder="Search bookmarks..." 
               className="w-full pl-9 pr-4"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -148,7 +167,7 @@ export default function Sidebar({
             ))
           ) : (
             <div className="p-4 text-center text-gray-500">
-              {searchQuery ? 'कोई मिलान नहीं मिला' : 'अभी तक कोई श्रेणी नहीं'}
+              {searchQuery ? 'No matches found' : 'No categories yet'}
             </div>
           )}
         </div>
