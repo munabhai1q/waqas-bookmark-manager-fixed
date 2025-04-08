@@ -114,7 +114,7 @@ export default function CategorySection({
                         e.stopPropagation();
                         onSelectBookmark(bookmark);
                       }}>
-                        एकल टैब में खोलें
+                        बुकमार्क खोलें
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={(e) => openInNewBrowserTab(e, bookmark.url)}>
                         बाहरी ब्राउज़र में खोलें

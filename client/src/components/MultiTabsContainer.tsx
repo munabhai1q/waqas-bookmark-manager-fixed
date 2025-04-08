@@ -30,54 +30,38 @@ export default function MultiTabsContainer({
     }
   }, [initialBookmark]);
 
-  // Add a new tab
+  // Add a new tab - in this version we actually don't need to track active status
+  // since we're displaying all tabs stacked
   const addTab = (bookmark: Bookmark) => {
-    // If tab is already open, just activate it
+    // Don't add duplicates
     if (openTabs.some(tab => tab.bookmark.id === bookmark.id)) {
-      setActiveTab(bookmark.id.toString());
-      setOpenTabs(openTabs.map(tab => ({
-        ...tab,
-        isActive: tab.bookmark.id === bookmark.id
-      })));
+      // Maybe scroll to the existing tab instead?
       return;
     }
 
-    // Otherwise, add a new tab
+    // Add a new tab
     const newTab: OpenTab = {
       bookmark,
-      isActive: true
+      isActive: true // We don't really use this flag in stacked mode, but keep for consistency
     };
 
-    const updatedTabs = openTabs.map(tab => ({
-      ...tab,
-      isActive: false
-    }));
-
-    setOpenTabs([...updatedTabs, newTab]);
-    setActiveTab(bookmark.id.toString());
+    setOpenTabs([...openTabs, newTab]);
+    // We could potentially scroll to the new tab
   };
 
-  // Remove a tab
+  // Remove a tab - simplified for stacked view
   const removeTab = (tabId: number) => {
-    // Find index of the tab to remove
-    const tabIndex = openTabs.findIndex(tab => tab.bookmark.id === tabId);
-    if (tabIndex === -1) return;
-
-    // If it's the active tab, determine which tab to activate next
-    const isActiveTab = openTabs[tabIndex].isActive;
+    setOpenTabs(openTabs.filter(tab => tab.bookmark.id !== tabId));
     
-    const newTabs = openTabs.filter(tab => tab.bookmark.id !== tabId);
-    
-    if (isActiveTab && newTabs.length > 0) {
-      // Activate the next tab, or the previous if it's the last one
-      const nextActiveIndex = Math.min(tabIndex, newTabs.length - 1);
-      newTabs[nextActiveIndex].isActive = true;
-      setActiveTab(newTabs[nextActiveIndex].bookmark.id.toString());
-    } else if (newTabs.length === 0) {
+    // If no tabs left, clear active tab
+    if (openTabs.length <= 1) {
       setActiveTab(null);
     }
     
-    setOpenTabs(newTabs);
+    toast({
+      title: "वेबसाइट बंद की गई",
+      description: "बुकमार्क किए गए वेबसाइट को बंद कर दिया गया है।",
+    });
   };
 
   // Change the active tab
@@ -115,112 +99,25 @@ export default function MultiTabsContainer({
   return (
     <div className={`flex flex-col flex-1 overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`}>
       {/* Tab bar */}
-      <div className="border-b flex items-center bg-gray-50">
-        <Tabs 
-          value={activeTab || undefined} 
-          onValueChange={changeActiveTab}
-          className="flex-1 overflow-x-auto"
-        >
-          <TabsList className="bg-transparent h-auto p-0 flex overflow-x-auto">
-            {openTabs.map((tab) => (
-              <div key={tab.bookmark.id} className="flex items-center relative group">
-                <TabsTrigger 
-                  value={tab.bookmark.id.toString()}
-                  className={`data-[state=active]:bg-white rounded-none border-r px-4 py-2 h-10 flex items-center gap-2 max-w-[180px] ${tab.isActive ? 'border-b-2 border-b-primary' : ''}`}
-                >
-                  <Globe className="h-4 w-4" />
-                  <span className="truncate">{tab.bookmark.title}</span>
-                </TabsTrigger>
-                
-                {/* Controls for active tabs */}
-                {tab.isActive && (
-                  <div className="absolute right-7 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 w-6 p-0 rounded-full hover:bg-gray-200 opacity-50 hover:opacity-100"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        refreshTab(tab.bookmark.id);
-                      }}
-                      title="रीफ्रेश करें"
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 w-6 p-0 rounded-full hover:bg-gray-200 opacity-50 hover:opacity-100"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openInNewTab(tab.bookmark.url);
-                      }}
-                      title="नए टैब में खोलें"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-                
-                {/* Close button */}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-6 w-6 p-0 rounded-full hover:bg-gray-200"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeTab(tab.bookmark.id);
-                  }}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            ))}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-10 px-2"
-              onClick={onShowAddBookmark}
-              title="नया बुकमार्क जोड़ें"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </TabsList>
-        </Tabs>
+      <div className="border-b flex items-center justify-between bg-gray-50 px-4 py-2">
+        <h2 className="text-lg font-medium">बुकमार्क वेबसाइट्स</h2>
         
-        {/* Control buttons */}
-        <div className="flex items-center ml-auto">
-          {activeTab && (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-10 px-2"
-                onClick={() => refreshTab(parseInt(activeTab))}
-                title="वर्तमान टैब रीफ्रेश करें"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-10 px-2"
-                onClick={() => {
-                  const tab = openTabs.find(tab => tab.bookmark.id.toString() === activeTab);
-                  if (tab) openInNewTab(tab.bookmark.url);
-                }}
-                title="नए ब्राउज़र टैब में खोलें"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-            </>
-          )}
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8"
+            onClick={onShowAddBookmark}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            नया बुकमार्क जोड़ें
+          </Button>
           
           {/* Fullscreen toggle */}
           <Button
             variant="ghost"
             size="sm"
-            className="h-10 px-2"
+            className="h-8 w-8 p-0"
             onClick={toggleFullscreen}
             title={isFullscreen ? "फुलस्क्रीन से बाहर निकलें" : "फुलस्क्रीन मोड"}
           >
@@ -229,27 +126,68 @@ export default function MultiTabsContainer({
         </div>
       </div>
       
-      {/* Website frames container */}
-      <div className="flex-1 relative overflow-hidden">
+      {/* Website frames container - Vertical stack of websites */}
+      <div className="flex-1 overflow-y-auto">
         {openTabs.length === 0 ? (
-          <WebsiteFrame 
-            showWelcome={showWelcome} 
-            onShowAddBookmark={onShowAddBookmark} 
-          />
+          <div className="h-full">
+            <WebsiteFrame 
+              showWelcome={showWelcome} 
+              onShowAddBookmark={onShowAddBookmark} 
+            />
+          </div>
         ) : (
-          openTabs.map((tab) => (
-            <div 
-              key={tab.bookmark.id}
-              className={`absolute inset-0 transition-opacity ${tab.isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-            >
-              <WebsiteFrame 
-                bookmark={tab.bookmark} 
-                showWelcome={false} 
-                onShowAddBookmark={onShowAddBookmark}
-                refreshKey={refreshCounter[tab.bookmark.id] || 0}
-              />
-            </div>
-          ))
+          <div className="flex flex-col gap-4 p-4">
+            {openTabs.map((tab) => (
+              <div 
+                key={tab.bookmark.id}
+                className="border rounded-lg shadow-sm overflow-hidden"
+              >
+                <div className="bg-gray-100 border-b px-3 py-2 flex items-center justify-between">
+                  <div className="font-medium truncate flex items-center">
+                    <Globe className="h-4 w-4 mr-2 text-primary" />
+                    {tab.bookmark.title}
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 w-7 p-0"
+                      onClick={() => refreshTab(tab.bookmark.id)}
+                      title="रीफ्रेश करें"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 w-7 p-0"
+                      onClick={() => openInNewTab(tab.bookmark.url)}
+                      title="नए टैब में खोलें"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 w-7 p-0 hover:bg-red-50 hover:text-red-500"
+                      onClick={() => removeTab(tab.bookmark.id)}
+                      title="बंद करें"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="h-[500px]">
+                  <WebsiteFrame 
+                    bookmark={tab.bookmark} 
+                    showWelcome={false} 
+                    onShowAddBookmark={onShowAddBookmark}
+                    refreshKey={refreshCounter[tab.bookmark.id] || 0}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

@@ -48,31 +48,7 @@ export default function WebsiteFrame({
   // Render the component
   return (
     <div className="flex-1 overflow-hidden relative">
-      {/* Quick controls for active frames */}
-      {bookmark && canEmbed && (
-        <div className="absolute bottom-4 right-4 z-20 flex space-x-2 opacity-70 hover:opacity-100 transition-opacity">
-          <Button 
-            size="sm" 
-            variant="secondary" 
-            className="bg-white shadow-md"
-            onClick={handleRefresh}
-            title="रीफ्रेश करें"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button 
-            size="sm" 
-            variant="secondary" 
-            className="bg-white shadow-md"
-            onClick={handleOpenInNewTab}
-            title="नए टैब में खोलें"
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Open
-          </Button>
-        </div>
-      )}
+
       
       {/* Loading spinner */}
       {isLoading && bookmark && (
